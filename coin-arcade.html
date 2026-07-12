@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coin Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b16;
+    --bg2:#14142a;
+    --panel:#181832;
+    --accent:#00e5ff;
+    --accent2:#7c3aed;
+    --gold:#ffd166;
+    --text:#eef0ff;
+    --muted:#8b8fb3;
+    --danger:#ff3860;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(124,58,237,0.15), transparent 40%),
+      radial-gradient(circle at 80% 10%, rgba(0,229,255,0.12), transparent 40%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .pixel{font-family:'Press Start 2P', monospace;}
+  #app{max-width:960px;margin:0 auto;padding:20px 16px 60px;}
+
+  /* Header */
+  header{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 18px;border-radius:16px;
+    background:linear-gradient(180deg, var(--panel), var(--bg2));
+    border:1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.02), 0 20px 40px -20px rgba(0,0,0,0.6);
+  }
+  .logo{font-size:13px;letter-spacing:1px;color:var(--accent);
+    text-shadow:0 0 10px color-mix(in srgb, var(--accent) 70%, transparent), 0 0 24px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  .logo span{color:var(--gold);}
+  .coin-box{
+    display:flex;align-items:center;gap:10px;
+    background:#000;border-radius:10px;padding:8px 14px;
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  .coin-icon{
+    width:20px;height:20px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff6d0, var(--gold) 60%, #b8860b 100%);
+    box-shadow:0 0 8px rgba(255,209,102,0.7);
+    flex-shrink:0;
+  }
+  #coin-count{
+    font-family:'Press Start 2P', monospace;font-size:16px;color:var(--gold);
+    text-shadow:0 0 8px rgba(255,209,102,0.8);
+    min-width:70px;text-align:right;
+  }
+  #coin-count.flash{animation:flash 0.5s ease;}
+  @keyframes flash{
+    0%{transform:scale(1);}
+    30%{transform:scale(1.25);color:#fff;}
+    100%{transform:scale(1);}
+  }
+
+  /* Nav */
+  nav{display:flex;gap:10px;margin:20px 0;}
+  nav button{
+    flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);
+    background:var(--panel);color:var(--muted);font-weight:600;font-size:14px;
+    cursor:pointer;letter-spacing:0.5px;transition:all .2s;
+  }
+  nav button.active{
+    color:#000;background:var(--accent);
+    box-shadow:0 0 20px color-mix(in srgb, var(--accent) 50%, transparent);
+  }
+
+  h2.section-title{
+    font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;
+    margin:24px 0 12px 2px;
+  }
+
+  /* Cabinet grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+  .cabinet{
+    background:linear-gradient(160deg, var(--panel), var(--bg2));
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:16px;padding:18px;cursor:pointer;
+    position:relative;overflow:hidden;transition:transform .15s, box-shadow .15s;
+  }
+  .cabinet:hover{transform:translateY(-3px);box-shadow:0 12px 30px -12px rgba(0,0,0,0.7), 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent);}
+  .cabinet .glow{
+    position:absolute;top:-40%;right:-30%;width:140px;height:140px;border-radius:50%;
+    background:color-mix(in srgb, var(--accent) 35%, transparent);filter:blur(30px);
+  }
+  .cabinet .icon{font-size:32px;margin-bottom:10px;}
+  .cabinet h3{margin:0 0 6px;font-size:16px;}
+  .cabinet p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.4;}
+  .cabinet .best{
+    margin-top:12px;font-size:11px;color:var(--accent);font-weight:600;
+    display:inline-block;background:rgba(255,255,255,0.04);padding:4px 8px;border-radius:6px;
+  }
+
+  /* Shop */
+  .skin-card{
+    background:var(--panel);border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,0.06);
+    display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;
+  }
+  .skin-swatch{
+    width:100%;height:70px;border-radius:12px;
+  }
+  .skin-card h4{margin:0;font-size:14px;}
+  .skin-card .price{font-size:12px;color:var(--gold);font-weight:600;}
+  .skin-btn{
+    width:100%;padding:9px;border-radius:8px;border:none;font-weight:700;font-size:12px;cursor:pointer;
+    letter-spacing:0.5px;
+  }
+  .skin-btn.equip{background:var(--accent);color:#000;}
+  .skin-btn.unlock{background:var(--gold);color:#000;}
+  .skin-btn.locked{background:rgba(255,255,255,0.06);color:var(--muted);cursor:not-allowed;}
+  .skin-btn.equipped{background:rgba(255,255,255,0.06);color:var(--accent);border:1px solid var(--accent);cursor:default;}
+
+  /* Overlay / games */
+  #overlay{
+    position:fixed;inset:0;background:rgba(5,5,12,0.96);z-index:50;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;
+  }
+  #overlay.hidden{display:none;}
+  .game-wrap{width:100%;max-width:460px;text-align:center;}
+  .back-btn{
+    position:absolute;top:18px;left:18px;background:none;border:1px solid rgba(255,255,255,0.15);
+    color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;
+  }
+  .game-title{font-size:14px;letter-spacing:1px;color:var(--accent);margin-bottom:16px;}
+
+  /* Memory */
+  #memory-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 auto 16px;max-width:340px;}
+  .card{
+    aspect-ratio:1/1;border-radius:10px;position:relative;cursor:pointer;
+    transform-style:preserve-3d;transition:transform .35s;
+  }
+  .card.flipped, .card.matched{transform:rotateY(180deg);}
+  .card-face{
+    position:absolute;inset:0;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    backface-visibility:hidden;font-size:22px;
+  }
+  .card-back{background:linear-gradient(150deg, var(--accent), var(--accent2));}
+  .card-front{background:var(--panel);transform:rotateY(180deg);border:1px solid rgba(255,255,255,0.1);}
+  .card.matched .card-front{opacity:0.5;}
+  .stat-row{display:flex;justify-content:center;gap:20px;color:var(--muted);font-size:13px;margin-bottom:14px;}
+
+  /* Reflex */
+  #reflex-arena{
+    position:relative;height:280px;background:var(--panel);border-radius:14px;overflow:hidden;
+    margin-bottom:16px;border:1px solid rgba(255,255,255,0.06);
+  }
+  #reflex-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px;}
+  #reflex-target{
+    position:absolute;width:56px;height:56px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--accent) 60%);
+    box-shadow:0 0 20px var(--accent);cursor:pointer;display:none;
+  }
+
+  /* Runner */
+  #runner-canvas{background:#05050d;border-radius:14px;display:block;margin:0 auto 16px;border:1px solid rgba(255,255,255,0.08);touch-action:none;}
+
+  .result-box{background:var(--panel);border-radius:14px;padding:20px;margin-top:6px;}
+  .result-box .earned{font-family:'Press Start 2P';color:var(--gold);font-size:20px;margin:10px 0;text-shadow:0 0 10px rgba(255,209,102,.6);}
+  .btn-row{display:flex;gap:10px;margin-top:16px;}
+  .btn-row button{
+    flex:1;padding:11px;border-radius:9px;border:none;font-weight:700;cursor:pointer;font-size:13px;
+  }
+  .btn-primary{background:var(--accent);color:#000;}
+  .btn-secondary{background:rgba(255,255,255,0.08);color:var(--text);}
+  .muted-small{color:var(--muted);font-size:12px;margin-top:4px;}
+
+  footer{text-align:center;margin-top:34px;color:var(--muted);font-size:11px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo pixel">COIN <span>ARCADE</span></div>
+    <div class="coin-box">
+      <div class="coin-icon"></div>
+      <div id="coin-count" class="pixel">0000</div>
+    </div>
+  </header>
+
+  <nav>
+    <button id="tab-play" class="active">▶ PLAY</button>
+    <button id="tab-shop">★ SKIN SHOP</button>
+  </nav>
+
+  <div id="view-play">
+    <h2 class="section-title">Choose a game</h2>
+    <div class="grid" id="cabinet-grid"></div>
+  </div>
+
+  <div id="view-shop" style="display:none;">
+    <h2 class="section-title">Skins — change your arcade colors</h2>
+    <div class="grid" id="skin-grid"></div>
+  </div>
+
+  <footer>Coins are saved to your account and carry across visits.</footer>
+</div>
+
+<div id="overlay" class="hidden">
+  <button class="back-btn" id="back-btn">← Back</button>
+  <div class="game-wrap" id="game-wrap"></div>
+</div>
+
+<script>
+(function(){
+  const SKINS = [
+    {id:'cyan', name:'Cyan Circuit', cost:0, accent:'#00e5ff', accent2:'#7c3aed'},
+    {id:'magenta', name:'Magenta Riot', cost:150, accent:'#ff2e88', accent2:'#7c3aed'},
+    {id:'gold', name:'Gold Rush', cost:300, accent:'#ffd166', accent2:'#ff6b35'},
+    {id:'violet', name:'Violet Storm', cost:500, accent:'#a78bfa', accent2:'#00e5ff'},
+    {id:'toxic', name:'Toxic Green', cost:750, accent:'#39ff14', accent2:'#ff2e88'},
+  ];
+
+  const GAMES = [
+    {id:'memory', icon:'🃏', name:'Memory Match', desc:'Flip cards, find every pair. Fewer moves = more coins.'},
+    {id:'reflex', icon:'⚡', name:'Reflex Tap', desc:'Hit the target the instant it appears. 5 rounds.'},
+    {id:'runner', icon:'🚀', name:'Coin Runner', desc:'Dodge spikes, grab coins, survive as long as you can.'},
+  ];
+
+  let state = {coins:0, unlocked:['cyan'], skin:'cyan', best:{memory:null, reflex:null, runner:0}};
+
+  const hasArtifactStorage = typeof window.storage !== 'undefined';
+
+  async function load(){
+    try{
+      if(hasArtifactStorage){
+        const res = await window.storage.get('coin-arcade-state', false);
+        if(res && res.value){ state = Object.assign(state, JSON.parse(res.value)); }
+      } else {
+        const raw = localStorage.getItem('coin-arcade-state');
+        if(raw){ state = Object.assign(state, JSON.parse(raw)); }
+      }
+    }catch(e){ /* no saved state yet */ }
+    applySkin(state.skin, false);
+    renderAll();
+  }
+  async function save(){
+    try{
+      if(hasArtifactStorage){
+        await window.storage.set('coin-arcade-state', JSON.stringify(state), false);
+      } else {
+        localStorage.setItem('coin-arcade-state', JSON.stringify(state));
+      }
+    }catch(e){ console.error('save failed', e); }
+  }
+
+  function applySkin(id, doSave){
+    const skin = SKINS.find(s=>s.id===id) || SKINS[0];
+    document.documentElement.style.setProperty('--accent', skin.accent);
+    document.documentElement.style.setProperty('--accent2', skin.accent2);
+    state.skin = id;
+    if(doSave) save();
+  }
+
+  function addCoins(n){
+    state.coins += n;
+    save();
+    renderCoins(true);
+  }
+
+  function renderCoins(flash){
+    const el = document.getElementById('coin-count');
+    el.textContent = String(state.coins).padStart(4,'0');
+    if(flash){ el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+  }
+
+  function renderCabinets(){
+    const grid = document.getElementById('cabinet-grid');
+    grid.innerHTML = '';
+    GAMES.forEach(g=>{
+      const card = document.createElement('div');
+      card.className = 'cabinet';
+      let bestText = '';
+      if(g.id==='memory' && state.best.memory) bestText = `Best: ${state.best.memory} moves`;
+      if(g.id==='reflex' && state.best.reflex) bestText = `Best: ${state.best.reflex}ms avg`;
+      if(g.id==='runner' && state.best.runner) bestText = `Best: ${state.best.runner} score`;
+      card.innerHTML = `<div class="glow"></div><div class="icon">${g.icon}</div><h3>${g.name}</h3><p>${g.desc}</p>${bestText?`<div class="best">${bestText}</div>`:''}`;
+      card.onclick = ()=>launchGame(g.id);
+      grid.appendChild(card);
+    });
+  }
+
+  function renderShop(){
+    const grid = document.getElementById('skin-grid');
+    grid.innerHTML = '';
+    SKINS.forEach(s=>{
+      const unlocked = state.unlocked.includes(s.id);
+      const equipped = state.skin === s.id;
+      const card = document.createElement('div');
+      card.className = 'skin-card';
+      let btnHtml;
+      if(equipped) btnHtml = `<button class="skin-btn equipped">EQUIPPED</button>`;
+      else if(unlocked) btnHtml = `<button class="skin-btn equip" data-act="equip" data-id="${s.id}">EQUIP</button>`;
+      else if(state.coins >= s.cost) btnHtml = `<button class="skin-btn unlock" data-act="unlock" data-id="${s.id}">UNLOCK — ${s.cost}</button>`;
+      else btnHtml = `<button class="skin-btn locked" disabled>NEED ${s.cost}</button>`;
+      card.innerHTML = `
+        <div class="skin-swatch" style="background:linear-gradient(135deg, ${s.accent}, ${s.accent2});"></div>
+        <h4>${s.name}</h4>
+        <div class="price">${s.cost===0?'Free':s.cost+' coins'}</div>
+        ${btnHtml}
+      `;
+      grid.appendChild(card);
+    });
+    grid.querySelectorAll('button[data-act]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const id = btn.getAttribute('data-id');
+        const act = btn.getAttribute('data-act');
+        const skin = SKINS.find(s=>s.id===id);
+        if(act==='unlock' && state.coins>=skin.cost){
+          state.coins -= skin.cost;
+          state.unlocked.push(id);
+          applySkin(id, false);
+          save();
+        } else if(act==='equip'){
+          applySkin(id, true);
+        }
+        renderAll();
+      };
+    });
+  }
+
+  function renderAll(){
+    renderCoins(false);
+    renderCabinets();
+    renderShop();
+  }
+
+  // ---- Tabs ----
+  document.getElementById('tab-play').onclick = ()=>{
+    document.getElementById('tab-play').classList.add('active');
+    document.getElementById('tab-shop').classList.remove('active');
+    document.getElementById('view-play').style.display = '';
+    document.getElementById('view-shop').style.display = 'none';
+  };
+  document.getElementById('tab-shop').onclick = ()=>{
+    document.getElementById('tab-shop').classList.add('active');
+    document.getElementById('tab-play').classList.remove('active');
+    document.getElementById('view-shop').style.display = '';
+    document.getElementById('view-play').style.display = 'none';
+  };
+
+  // ---- Overlay control ----
+  const overlay = document.getElementById('overlay');
+  const wrap = document.getElementById('game-wrap');
+  let activeCleanup = null;
+  document.getElementById('back-btn').onclick = closeGame;
+
+  function closeGame(){
+    if(activeCleanup) activeCleanup();
+    activeCleanup = null;
+    overlay.classList.add('hidden');
+    wrap.innerHTML = '';
+    renderAll();
+  }
+
+  function launchGame(id){
+    overlay.classList.remove('hidden');
+    wrap.innerHTML = '';
+    if(id==='memory') startMemory();
+    if(id==='reflex') startReflex();
+    if(id==='runner') startRunner();
+  }
+
+  function resultScreen(title, earned, extraLine, bestUpdated){
+    wrap.innerHTML = `
+      <div class="game-title pixel">${title}</div>
+      <div class="result-box">
+        <div>You earned</div>
+        <div class="earned">+${earned} 🪙</div>
+        <div class="muted-small">${extraLine||''}</div>
+        ${bestUpdated?'<div class="muted-small" style="color:var(--accent)">New best!</div>':''}
+        <div class="btn-row">
+          <button class="btn-secondary" id="res-back">Back to Arcade</button>
+          <button class="btn-primary" id="res-again">Play Again</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('res-back').onclick = closeGame;
+    document.getElementById('res-again').onclick = ()=>launchGame(currentGameId);
+    addCoins(earned);
+  }
+
+  let currentGameId = null;
+
+  // ================= MEMORY MATCH =================
+  function startMemory(){
+    currentGameId = 'memory';
+    const symbols = ['🕹️','👾','⭐','🔥','💎','🎯'];
+    let deck = [...symbols, ...symbols];
+    deck.sort(()=>Math.random()-0.5);
+    let flipped = [], matchedCount = 0, moves = 0, locked = false;
+    let seconds = 0;
+    const timerEl_id = 'mem-timer', moves_id = 'mem-moves';
+
+    wrap.innerHTML = `
+      <div class="game-title pixel">MEMORY MATCH</div>
+      <div class="stat-row"><span>⏱ <span id="${timerEl_id}">0</span>s</span><span>Moves: <span id="${moves_id}">0</span></span></div>
+      <div id="memory-grid"></div>
+    `;
+    const grid = document.getElementById('memory-grid');
+    deck.forEach((sym, i)=>{
+      const c = document.createElement('div');
+      c.className = 'card';
+      c.innerHTML = `<div class="card-face card-back"></div><div class="card-face card-front">${sym}</div>`;
+      c.dataset.sym = sym;
+      c.dataset.idx = i;
+      c.onclick = ()=>flipCard(c);
+      grid.appendChild(c);
+    });
+
+    const timer = setInterval(()=>{
+      seconds++;
+      const t = document.getElementById(timerEl_id);
+      if(t) t.textContent = seconds; else clearInterval(timer);
+    }, 1000);
+
+    activeCleanup = ()=> clearInterval(timer);
+
+    function flipCard(card){
+      if(locked || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+      card.classList.add('flipped');
+      flipped.push(card);
+      if(flipped.length===2){
+        moves++;
+        document.getElementById(moves_id).textContent = moves;
+        locked = true;
+        if(flipped[0].dataset.sym === flipped[1].dataset.sym){
+          flipped.forEach(c=>c.classList.add('matched'));
+          matchedCount++;
+          flipped = [];
+          locked = false;
+          if(matchedCount === symbols.length){
+            clearInterval(timer);
+            const earned = Math.max(20, Math.round(220 - moves*6 - seconds*2));
+            const isBest = state.best.memory === null || moves < state.best.memory;
+            if(isBest) state.best.memory = moves;
+            resultScreen('MEMORY MATCH', earned, `${moves} moves · ${seconds}s`, isBest);
+          }
+        } else {
+          setTimeout(()=>{
+            flipped.forEach(c=>c.classList.remove('flipped'));
+            flipped = [];
+            locked = false;
+          }, 700);
+        }
+      }
+    }
+  }
+
+  // ================= REFLEX TAP =================
+  function startReflex(){
+    currentGameId = 'reflex';
+    wrap.innerHTML = `
+      <div class="game-title pixel">REFLEX TAP</div>
+      <div class="stat-row"><span>Round: <span id="rx-round">1</span>/5</span><span>Avg: <span id="rx-avg">--</span>ms</span></div>
+      <div id="reflex-arena">
+        <div id="reflex-msg">Get ready...</div>
+        <div id="reflex-target"></div>
+      </div>
+    `;
+    const arena = document.getElementById('reflex-arena');
+    const target = document.getElementById('reflex-target');
+    const msg = document.getElementById('reflex-msg');
+    let round = 0, times = [], startTime = 0, roundTimeout = null, active = false;
+
+    activeCleanup = ()=>{ if(roundTimeout) clearTimeout(roundTimeout); };
+
+    function nextRound(){
+      if(round>=5){
+        const avg = Math.round(times.reduce((a,b)=>a+b,0)/times.length);
+        const earned = Math.max(15, Math.round(420 - avg));
+        const isBest = state.best.reflex === null || avg < state.best.reflex;
+        if(isBest) state.best.reflex = avg;
+        resultScreen('REFLEX TAP', earned, `Average reaction: ${avg}ms`, isBest);
+        return;
+      }
+      round++;
+      document.getElementById('rx-round').textContent = round;
+      msg.style.display = 'flex';
+      msg.textContent = 'Wait for it...';
+      target.style.display = 'none';
+      active = false;
+      const delay = 800 + Math.random()*1800;
+      roundTimeout = setTimeout(()=>{
+        const w = arena.clientWidth - 56, h = arena.clientHeight - 56;
+        target.style.left = Math.random()*w + 'px';
+        target.style.top = Math.random()*h + 'px';
+        target.style.display = 'block';
+        msg.style.display = 'none';
+        startTime = performance.now();
+        active = true;
+      }, delay);
+    }
+
+    arena.onclick = (e)=>{
+      if(e.target === target && active){
+        const rt = performance.now() - startTime;
+        times.push(rt);
+        active = false;
+        target.style.display = 'none';
+        nextRound();
+      } else if(!active && msg.style.display !== 'none'){
+        // clicked too early
+        msg.textContent = 'Too soon! Wait for green.';
+      }
+    };
+
+    nextRound();
+  }
+
+  // ================= COIN RUNNER =================
+  function startRunner(){
+    currentGameId = 'runner';
+    wrap.innerHTML = `
+      <div class="game-title pixel">COIN RUNNER</div>
+      <div class="stat-row"><span>Score: <span id="rn-score">0</span></span><span>Tap / Space to jump</span></div>
+      <canvas id="runner-canvas" width="420" height="280"></canvas>
+    `;
+    const canvas = document.getElementById('runner-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('rn-score');
+    const groundY = 230;
+    let player = {x:60, y:groundY-30, w:26, h:30, vy:0, jumping:false};
+    let obstacles = [], coins = [], frame = 0, speed = 4, score = 0, coinsCollected = 0, running = true;
+    let accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#00e5ff';
+
+    function jump(){
+      if(!player.jumping){
+        player.vy = -9.5;
+        player.jumping = true;
+      }
+    }
+    function keyHandler(e){ if(e.code==='Space'){ e.preventDefault(); jump(); } }
+    window.addEventListener('keydown', keyHandler);
+    canvas.addEventListener('pointerdown', jump);
+
+    let rafId;
+    activeCleanup = ()=>{
+      running = false;
+      window.removeEventListener('keydown', keyHandler);
+      canvas.removeEventListener('pointerdown', jump);
+      if(rafId) cancelAnimationFrame(rafId);
+    };
+
+    function spawnObstacle(){
+      obstacles.push({x:canvas.width, w:18+Math.random()*14, h:24+Math.random()*26});
+    }
+    function spawnCoin(){
+      coins.push({x:canvas.width, y: groundY - 40 - Math.random()*90, r:8});
+    }
+
+    function loop(){
+      if(!running) return;
+      frame++;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+
+      // ground
+      ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+      ctx.beginPath(); ctx.moveTo(0, groundY+30); ctx.lineTo(canvas.width, groundY+30); ctx.stroke();
+
+      // physics
+      player.vy += 0.55;
+      player.y += player.vy;
+      if(player.y > groundY-30){ player.y = groundY-30; player.vy = 0; player.jumping = false; }
+
+      // spawn
+      if(frame % Math.max(40, 70-Math.floor(speed*3)) === 0) spawnObstacle();
+      if(frame % 55 === 0) spawnCoin();
+
+      // obstacles
+      obstacles.forEach(o=>o.x -= speed);
+      obstacles = obstacles.filter(o=>o.x > -30);
+      ctx.fillStyle = '#ff3860';
+      obstacles.forEach(o=>{
+        ctx.beginPath();
+        ctx.moveTo(o.x, groundY+30);
+        ctx.lineTo(o.x+o.w/2, groundY+30-o.h);
+        ctx.lineTo(o.x+o.w, groundY+30);
+        ctx.closePath();
+        ctx.fill();
+      });
+
+      // coins
+      coins.forEach(c=>c.x -= speed);
+      coins = coins.filter(c=>c.x > -20);
+      ctx.fillStyle = '#ffd166';
+      coins.forEach(c=>{
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
+        ctx.fill();
+      });
+
+      // player
+      ctx.fillStyle = accentColor;
+      ctx.shadowColor = accentColor;
+      ctx.shadowBlur = 12;
+      ctx.fillRect(player.x, player.y, player.w, player.h);
+      ctx.shadowBlur = 0;
+
+      // collisions: obstacle
+      for(const o of obstacles){
+        if(player.x < o.x+o.w-4 && player.x+player.w > o.x+4 && player.y+player.h > groundY+30-o.h+6){
+          gameOver();
+          return;
+        }
+      }
+      // collisions: coin
+      coins = coins.filter(c=>{
+        const dx = (player.x+player.w/2) - c.x, dy = (player.y+player.h/2) - c.y;
+        if(Math.sqrt(dx*dx+dy*dy) < c.r + 16){ coinsCollected++; return false; }
+        return true;
+      });
+
+      score = Math.floor(frame/6) + coinsCollected*8;
+      scoreEl.textContent = score;
+      speed = 4 + Math.min(5, frame/900);
+
+      rafId = requestAnimationFrame(loop);
+    }
+
+    function gameOver(){
+      running = false;
+      window.removeEventListener('keydown', keyHandler);
+      const earned = Math.max(15, Math.round(score/2));
+      const isBest = score > state.best.runner;
+      if(isBest) state.best.runner = score;
+      resultScreen('COIN RUNNER', earned, `Score: ${score} · Coins grabbed: ${coinsCollected}`, isBest);
+    }
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  load();
+})();
+</script>
+</body>
+</html>
